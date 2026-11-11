@@ -1,0 +1,23 @@
+.\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+.\bin\windows\zookeeper-shell.bat 127.0.0.1:2181
+
+meta id change in logs folder to start kafka
+
+.\bin\windows\kafka-server-start.bat .\config\server.properties
+.\bin\windows\kafka-broker-api-versions.bat --bootstrap-server 127.0.0.1:9092
+
+.\bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9092
+.\bin\windows\kafka-topics.bat --create --topic upi-efrm-umap --bootstrap-server 127.0.0.1:9092 --partitions 3 --replication-factor 1
+
+.\bin\windows\kafka-console-producer.bat --bootstrap-server localhost:9092 --topic upi-efrm-txn
+.\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic upi-efrm-txn --from-beginning --max-messages 25
+\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic upi-efrm-txn --from-beginning --property print.partition=true --property print.offset=true
+
+
+py "upi_efrm_umap_ready.py" --time 10 --threads 4 --tps 100 --topic upi-efrm-umap --bootstrap-servers localhost:9092
+python ML_gaussianSynthetic.py --time 5 --threads 4 --tps 100 --users 10000 --merchants 1000
+py "ML_advanceSynthetic.py" --time 120 --threads 4 --tps 1 --topic upi-efrm-txn --bootstrap-servers localhost:9092
+py "ML_interSynthetic.py" --time 120 --threads 4 --tps 1 --topic upi-efrm-txn --bootstrap-servers localhost:9092
+py "MLsynthetic.py" --time 120 --threads 4 --tps 1 --topic upi-efrm-txn --bootstrap-servers localhost:9092
+py "upi_simulator_datapump_highly_realistic_wide_column_JSON.py" --time 5 --threads 2 --tps 2 --topic upi-efrm-txn --bootstrap-servers localhost:9092
+
